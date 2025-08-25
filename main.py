@@ -1,22 +1,24 @@
 import base64
 
+import dash_html_components as html
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from dash import Dash, Input, Output, html
+from dash import Dash, Input, Output, dcc, html
 from PIL import Image
 
-IMG_PATH = "assets/minimal-ship.png"
+IMG_PATH = "assets/Titanic Deck.png"
 df = pd.read_csv("data/titanic.csv")
 app = Dash(__name__)
 
 
 def load_image() -> str:
-    """Tries to open the image placeholder for the ship"""
     try:
         with open(IMG_PATH, "rb") as image_file:
             encoded_image_string = base64.b64encode(image_file.read()).decode("utf-8")
 
+        # Prepend the data URI header
+        # Adjust 'jpeg' based on your image type (png, svg, etc.)
         encoded_image_string = f"data:image/jpeg;base64,{encoded_image_string}"
 
     except FileNotFoundError as e:
@@ -29,7 +31,6 @@ def load_image() -> str:
 
 
 def get_image_size():
-    """Aaryan's clustering algo needs image height and width"""
     deck_img = Image.open(IMG_PATH)
     return deck_img.size
 
@@ -39,7 +40,9 @@ ENCODED_IMAGE_STRING = load_image()
 
 
 def generate_scatter_coordinates(df, image_width, image_height):
-    """Generates correctly clustered coordinates based on passenger class"""
+    """
+    Generates correctly clustered coordinates based on passenger class.
+    """
     x_coords = np.zeros(len(df))
     y_coords = np.zeros(len(df))
 
@@ -122,15 +125,21 @@ def generate_plot(
 
 
 def create_dashboard():
-    """
-    Creates a custom layout for the "Plan Your Next Titanic Journey" dashboard.
+    """Creates a custom layout for the "Plan Your Next Titanic Journey" dashboard.
 
-    This layout includes a title, a row of four scenario buttons, and
+    This layout includes a title, a dropdown for scenario selection, and
     placeholders for a ship image and summary statistics.
 
     Returns:
-        html.Div: The complete layout for the Dash application.
-    """
+        html.Div: The complete layout for the Dash application."""
+
+    # Define the categories for the dropdown menu
+    titanic_categories = [
+        {"label": "Social Climber", "value": "Social Climber"},
+        {"label": "Last Minute Ticket", "value": "Last Minute Ticket"},
+        {"label": "Unlikely Survivor", "value": "Unlikely Survivor"},
+        {"label": "(Un)Happy Family", "value": "(Un)Happy Family"},
+    ]
 
     # Define the Dashboard Layout
     app.layout = html.Div(
@@ -151,86 +160,27 @@ def create_dashboard():
                     "color": "#FFFFFF",
                 },
             ),
-            # Scenario Buttons Section
+            # Category Dropdown Section
             html.Div(
                 className="row",
                 children=[
                     html.Div(
-                        className="three columns",
+                        className="twelve columns",
                         children=[
-                            html.Button(
-                                "Social Climber",
-                                id="btn-social-climber",
-                                n_clicks=0,
-                                style={
-                                    "width": "100%",
-                                    "padding": "15px",
-                                    "fontSize": "16px",
-                                    "backgroundColor": "#5C6BC0",
-                                    "border": "none",
-                                    "color": "white",
-                                    "borderRadius": "5px",
-                                },
-                            )
+                            html.Label(
+                                "Select Your Passenger Type:",
+                                style={"fontSize": "18px", "marginBottom": "10px"},
+                            ),
+                            dcc.Dropdown(
+                                id="category-dropdown",
+                                options=titanic_categories,
+                                value="Social Climber",  # Default value
+                                clearable=False,
+                                style={"color": "#333"},
+                            ),
                         ],
-                    ),
-                    html.Div(
-                        className="three columns",
-                        children=[
-                            html.Button(
-                                "Last Minute Ticket",
-                                id="btn-last-minute",
-                                n_clicks=0,
-                                style={
-                                    "width": "100%",
-                                    "padding": "15px",
-                                    "fontSize": "16px",
-                                    "backgroundColor": "#42A5F5",
-                                    "border": "none",
-                                    "color": "white",
-                                    "borderRadius": "5px",
-                                },
-                            )
-                        ],
-                    ),
-                    html.Div(
-                        className="three columns",
-                        children=[
-                            html.Button(
-                                "Unlikely Survivor",
-                                id="btn-unlikely-survivor",
-                                n_clicks=0,
-                                style={
-                                    "width": "100%",
-                                    "padding": "15px",
-                                    "fontSize": "16px",
-                                    "backgroundColor": "#26A69A",
-                                    "border": "none",
-                                    "color": "white",
-                                    "borderRadius": "5px",
-                                },
-                            )
-                        ],
-                    ),
-                    html.Div(
-                        className="three columns",
-                        children=[
-                            html.Button(
-                                "(Un)Happy Family",
-                                id="btn-family",
-                                n_clicks=0,
-                                style={
-                                    "width": "100%",
-                                    "padding": "15px",
-                                    "fontSize": "16px",
-                                    "backgroundColor": "#EF5350",
-                                    "border": "none",
-                                    "color": "white",
-                                    "borderRadius": "5px",
-                                },
-                            )
-                        ],
-                    ),
+                        style={"maxWidth": "600px", "margin": "0 auto"},
+                    )
                 ],
                 style={"marginBottom": "40px", "textAlign": "center"},
             ),
@@ -366,8 +316,13 @@ def update_text(category: str):
 
 
 def main():
-    app = create_dashboard()
-    app.run_server(debug=True)
+    create_dashboard()
+    app.run(debug=True)
+
+    # encoded_image = load_image()
+    # deck_width, deck_height = get_image_size()
+    # fig = generate_plot(social_climbers, deck_width, deck_height, encoded_image)
+    # fig.show()
 
 
 if __name__ == "__main__":
