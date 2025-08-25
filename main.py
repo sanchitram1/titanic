@@ -1,18 +1,18 @@
 import base64
 
-import dash_html_components as html
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from dash import Dash, Input, Output
+from dash import Dash, Input, Output, html
 from PIL import Image
 
-IMG_PATH = "assets/Titanic Deck.png"
+IMG_PATH = "assets/minimal-ship.png"
 df = pd.read_csv("data/titanic.csv")
 app = Dash(__name__)
 
 
 def load_image() -> str:
+    """Tries to open the image placeholder for the ship"""
     try:
         with open(IMG_PATH, "rb") as image_file:
             encoded_image_string = base64.b64encode(image_file.read()).decode("utf-8")
@@ -29,6 +29,7 @@ def load_image() -> str:
 
 
 def get_image_size():
+    """Aaryan's clustering algo needs image height and width"""
     deck_img = Image.open(IMG_PATH)
     return deck_img.size
 
@@ -38,9 +39,7 @@ ENCODED_IMAGE_STRING = load_image()
 
 
 def generate_scatter_coordinates(df, image_width, image_height):
-    """
-    Generates correctly clustered coordinates based on passenger class.
-    """
+    """Generates correctly clustered coordinates based on passenger class"""
     x_coords = np.zeros(len(df))
     y_coords = np.zeros(len(df))
 
@@ -288,8 +287,6 @@ def create_dashboard():
         ],
     )
 
-    return app
-
 
 def social_climbers() -> pd.DataFrame:
     """For the social climbers, we can look a bit at those who paid the lowest amount
@@ -313,7 +310,7 @@ def family() -> pd.DataFrame:
 
     # now, we can group by last name
     family_df["LastName"] = family_df["Name"].str.split(",").str[0].str.strip()
-    return family_df.groupby("LastName")
+    return family_df
 
 
 def last_minute() -> pd.DataFrame:
@@ -370,7 +367,7 @@ def update_text(category: str):
 
 def main():
     app = create_dashboard()
-    app.run(debug=True)
+    app.run_server(debug=True)
 
 
 if __name__ == "__main__":
