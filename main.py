@@ -4,11 +4,12 @@ import dash_html_components as html
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from dash import Dash
+from dash import Dash, Input, Output
 from PIL import Image
 
 IMG_PATH = "assets/Titanic Deck.png"
 df = pd.read_csv("data/titanic.csv")
+app = Dash(__name__)
 
 
 def load_image() -> str:
@@ -16,8 +17,6 @@ def load_image() -> str:
         with open(IMG_PATH, "rb") as image_file:
             encoded_image_string = base64.b64encode(image_file.read()).decode("utf-8")
 
-        # Prepend the data URI header
-        # Adjust 'jpeg' based on your image type (png, svg, etc.)
         encoded_image_string = f"data:image/jpeg;base64,{encoded_image_string}"
 
     except FileNotFoundError as e:
@@ -32,6 +31,10 @@ def load_image() -> str:
 def get_image_size():
     deck_img = Image.open(IMG_PATH)
     return deck_img.size
+
+
+DECK_WIDTH, DECK_HEIGHT = get_image_size()
+ENCODED_IMAGE_STRING = load_image()
 
 
 def generate_scatter_coordinates(df, image_width, image_height):
@@ -60,9 +63,9 @@ def generate_scatter_coordinates(df, image_width, image_height):
 
 def generate_plot(
     some_sliced_data: pd.DataFrame,
-    deck_width: int,
-    deck_height: int,
-    encoded_image: str,
+    deck_width: int = DECK_WIDTH,
+    deck_height: int = DECK_HEIGHT,
+    encoded_image: str = ENCODED_IMAGE_STRING,
 ) -> go.Figure:
     # Prepare hover text
     hover_text = [
@@ -129,7 +132,7 @@ def create_dashboard():
     Returns:
         html.Div: The complete layout for the Dash application.
     """
-    app = Dash(__name__)
+
     # Define the Dashboard Layout
     app.layout = html.Div(
         style={
@@ -288,15 +291,86 @@ def create_dashboard():
     return app
 
 
+def social_climbers() -> pd.DataFrame:
+    """For the social climbers, we can look a bit at those who paid the lowest amount
+    and traveled solo...in the hope of meeting someone who punched wayyyy above their
+    weight"""
+    lowest_fare_quantile = 0.10
+    social_climbers_df = df[
+        (df["Fare"] <= df["Fare"].quantile(lowest_fare_quantile))
+        & (df["SibSp"] == 0)
+        & (df["Parch"] == 0)
+    ].copy()
+
+    return social_climbers_df
+
+
+def family() -> pd.DataFrame:
+    """All families which had left on the Titanic...whether they ended up as happy
+    or unhappy"""
+    # family means either sibling or parent
+    family_df = df[(df["SibSp"] + df["Parch"]) > 0].copy()
+
+    # now, we can group by last name
+    family_df["LastName"] = family_df["Name"].str.split(",").str[0].str.strip()
+    return family_df.groupby("LastName")
+
+
+def last_minute() -> pd.DataFrame:
+    """Last minute attempts to find last minute ticket purchases, but looking at
+    people who boarded from Queenstown, and purchased either **very expensive** or
+    **very cheap** tickets"""
+    q = 0.25
+    q_low = df["Fare"].quantile(q)
+    q_high = df["Fare"].quantile(1 - q)
+    return df.loc[
+        (df["Embarked"] == "Q") & ((df["Fare"] <= q_low) | (df["Fare"] >= q_high)), :
+    ].copy()
+
+
+@app.callback(Output("ship-map", "figure"), Input("test-cases", "value"))
+def update_ship_map(category: str):
+    """This is the callback which configures the response of our Dash App to
+    whatever dropdown is selected"""
+    if category == "Social Climber":
+        df = social_climbers()
+        return generate_plot(df)
+    elif category == "Families":
+        df = family()
+        return generate_plot(df)
+    elif category == "Last Minute":
+        df = last_minute()
+        return generate_plot(df)
+
+
+@app.callback(Output("summary-stats-placeholder", "text"), Input("test-cases", "value"))
+def update_text(category: str):
+    if category == "Social Climber":
+        df = social_climbers()
+    elif category == "Families":
+        df = family()
+    elif category == "Last Minute":
+        df = last_minute()
+
+    # Build summary dynamically
+    total = len(df)
+    survived = df["Survived"].sum()
+    rate = (survived / total * 100) if total > 0 else 0
+
+    summary_text = [
+        html.H3("Survival Analysis"),
+        html.P(f"Total Passengers: {total}"),
+        html.P(f"Survived: {survived}"),
+        html.P(f"Did Not Survive: {total - survived}"),
+        html.P(f"Survival Rate: {rate:.2f}%"),
+    ]
+
+    app.layout = html.Div(children=summary_text)
+
+
 def main():
     app = create_dashboard()
-
     app.run(debug=True)
-
-    # encoded_image = load_image()
-    # deck_width, deck_height = get_image_size()
-    # fig = generate_plot(social_climbers, deck_width, deck_height, encoded_image)
-    # fig.show()
 
 
 if __name__ == "__main__":
