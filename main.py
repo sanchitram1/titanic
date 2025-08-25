@@ -3,6 +3,8 @@ import base64
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
+import dash_core_components as dcc
+import dash_html_components as html
 from PIL import Image
 
 IMG_PATH = "assets/Titanic Deck.png"
@@ -115,6 +117,76 @@ def generate_plot(
     )
 
     return fig
+
+def create_dashboard():
+    """
+    Creates a custom layout for the "Plan Your Next Titanic Journey" dashboard.
+
+    This layout includes a title, a row of four scenario buttons, and
+    placeholders for a ship image and summary statistics.
+
+    Returns:
+        html.Div: The complete layout for the Dash application.
+    """
+    # Define the Dashboard Layout
+    return html.Div(style={'backgroundColor': '#1E2A38', 'color': '#EAEAEA', 'padding': '20px', 'minHeight': '100vh', 'fontFamily': 'sans-serif'}, children=[
+        # Header
+        html.H1(
+            children="Plan Your Next Titanic Journey",
+            style={'textAlign': 'center', 'marginBottom': '30px', 'color': '#FFFFFF'}
+        ),
+
+        # Scenario Buttons Section
+        html.Div(className='row', children=[
+            html.Div(className='three columns', children=[
+                html.Button('Social Climber', id='btn-social-climber', n_clicks=0, style={'width': '100%', 'padding': '15px', 'fontSize': '16px', 'backgroundColor': '#5C6BC0', 'border': 'none', 'color': 'white', 'borderRadius': '5px'})
+            ]),
+            html.Div(className='three columns', children=[
+                html.Button('Last Minute Ticket', id='btn-last-minute', n_clicks=0, style={'width': '100%', 'padding': '15px', 'fontSize': '16px', 'backgroundColor': '#42A5F5', 'border': 'none', 'color': 'white', 'borderRadius': '5px'})
+            ]),
+            html.Div(className='three columns', children=[
+                html.Button('Unlikely Survivor', id='btn-unlikely-survivor', n_clicks=0, style={'width': '100%', 'padding': '15px', 'fontSize': '16px', 'backgroundColor': '#26A69A', 'border': 'none', 'color': 'white', 'borderRadius': '5px'})
+            ]),
+            html.Div(className='three columns', children=[
+                html.Button('(Un)Happy Family', id='btn-family', n_clicks=0, style={'width': '100%', 'padding': '15px', 'fontSize': '16px', 'backgroundColor': '#EF5350', 'border': 'none', 'color': 'white', 'borderRadius': '5px'})
+            ]),
+        ], style={'marginBottom': '40px', 'textAlign': 'center'}),
+
+        # Main Content Area (Image and Stats)
+        html.Div(className='row', children=[
+            # Left side for Ship Image
+            html.Div(className='seven columns', children=[
+                html.Div(
+                    children="[Your Ship Image Will Be Displayed Here]",
+                    id='ship-image-placeholder',
+                    style={
+                        'border': '1px dashed #444', 'padding': '20px',
+                        'textAlign': 'center', 'borderRadius': '5px',
+                        'height': '450px', 'display': 'flex',
+                        'alignItems': 'center', 'justifyContent': 'center',
+                        'backgroundColor': '#263238'
+                    }
+                )
+            ]),
+            # Right side for Summary Statistics
+            html.Div(className='five columns', children=[
+                html.Div(
+                    children=[
+                        html.H4("Analysis Summary"),
+                        html.P("[Summary statistics from the analysed data will be printed out here.]")
+                    ],
+                    id='summary-stats-placeholder',
+                    style={
+                        'border': '1px dashed #444', 'padding': '20px',
+                        'textAlign': 'center', 'borderRadius': '5px',
+                        'height': '450px',
+                        'backgroundColor': '#263238'
+                    }
+                )
+            ])
+        ])
+    ])
+
 
 
 def main():
