@@ -190,81 +190,93 @@ def create_dashboard():
 
     # Define the Dashboard Layout
     app.layout = html.Div(
-        className="dashboard",
+        style={
+            "transform": "scale(0.9)",
+            "transformOrigin": "top center",
+            "width": "111.1%",  # /* 100 / 0.9 = 111.1 */
+            "marginLeft": "-5.55%",  # /* (100 - 111.1)/2 = -5.55 */
+        },
         children=[
-            # Header
-            html.H1(
-                children="Titanic Itinerary",
-                style={
-                    "textAlign": "left",
-                    "marginBottom": "30px",
-                },
-            ),
-            # Top section
             html.Div(
-                className="row",
+                className="dashboard",
                 children=[
-                    # This is the container for the dropdown and its label
+                    # Header
+                    html.H1(
+                        children="Titanic Itinerary",
+                        style={
+                            "textAlign": "left",
+                            "marginBottom": "30px",
+                        },
+                    ),
+                    # Top section
                     html.Div(
-                        className="category-dropdown-container",
+                        className="row",
                         children=[
-                            html.Label(
-                                "Are you a...",
-                                style={
-                                    "marginRight": "16px",
-                                    "whiteSpace": "nowrap",  # no wrap!
-                                },
+                            # This is the container for the dropdown and its label
+                            html.Div(
+                                className="category-dropdown-container",
+                                children=[
+                                    html.Label(
+                                        "Are you a...",
+                                        style={
+                                            "marginRight": "16px",
+                                            "whiteSpace": "nowrap",  # no wrap!
+                                        },
+                                    ),
+                                    dcc.Dropdown(
+                                        id="category-dropdown",
+                                        options=titanic_categories,
+                                        value="Social Climber",
+                                        clearable=False,
+                                        style={
+                                            "flexGrow": "1",  # Allow the dropdown to grow
+                                        },
+                                    ),
+                                ],
                             ),
-                            dcc.Dropdown(
-                                id="category-dropdown",
-                                options=titanic_categories,
-                                value="Social Climber",
-                                clearable=False,
-                                style={
-                                    "flexGrow": "1",  # Allow the dropdown to grow
-                                },
+                            # This is the container for the four metrics
+                            html.Div(
+                                className="metrics-container",
+                                children=[
+                                    # Survival Percentage
+                                    html.Div(
+                                        className="info",
+                                        id="survival-percentage",
+                                        children=["--% survival"],
+                                    ),
+                                    # Number of Males
+                                    html.Div(
+                                        className="info",
+                                        id="number-of-males",
+                                        children=["-- males"],
+                                    ),
+                                    # Number of Females
+                                    html.Div(
+                                        className="info",
+                                        id="number-of-females",
+                                        children=["-- females"],
+                                    ),
+                                    # Average Age
+                                    html.Div(
+                                        className="info",
+                                        id="average-age",
+                                        children=["-- avg age"],
+                                    ),
+                                ],
                             ),
                         ],
                     ),
-                    # This is the container for the four metrics
                     html.Div(
-                        className="metrics-container",
+                        className="main-section",
                         children=[
-                            # Survival Percentage
                             html.Div(
-                                className="info",
-                                id="survival-percentage",
-                                children=["--% survival"],
-                            ),
-                            # Number of Males
-                            html.Div(
-                                className="info",
-                                id="number-of-males",
-                                children=["-- males"],
-                            ),
-                            # Number of Females
-                            html.Div(
-                                className="info",
-                                id="number-of-females",
-                                children=["-- females"],
-                            ),
-                            # Average Age
-                            html.Div(
-                                className="info",
-                                id="average-age",
-                                children=["-- avg age"],
-                            ),
+                                className="main", children=[dcc.Graph(id="ship-map")]
+                            )
                         ],
+                        style={"marginTop": "24px"},
                     ),
                 ],
-            ),
-            html.Div(
-                className="main-section",
-                children=[
-                    html.Div(className="main", children=[dcc.Graph(id="ship-map")])
-                ],
-                style={"marginTop": "24px"},
-            ),
+            )
         ],
     )
 
