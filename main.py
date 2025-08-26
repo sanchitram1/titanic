@@ -234,6 +234,12 @@ def create_dashboard():
                             html.Div(
                                 className="metrics-container",
                                 children=[
+                                    # Total passengers
+                                    html.Div(
+                                        className="info",
+                                        id="total-passengers",
+                                        children=["-- passengers"],
+                                    ),
                                     # Survival Percentage
                                     html.Div(
                                         className="info",
@@ -389,6 +395,19 @@ def update_age(category: str):
         html.P(f"{sub['Age'].mean():.0f}y", className="metric-value"),
         html.Div(style={"flexGrow": "1"}),
         html.P("average age", className="metric-label"),
+    ]
+
+
+@app.callback(
+    Output("total-passengers", "children"), Input("category-dropdown", "value")
+)
+def update_total_passengers(category: str):
+    """Regenerates average age metric based on selection"""
+    sub = get_selected_df(category)
+    return [
+        html.P(f"{sub.shape[0]:.0f}", className="metric-value"),
+        html.Div(style={"flexGrow": "1"}),
+        html.P("passengers", className="metric-label"),
     ]
 
 
