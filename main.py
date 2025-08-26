@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 from dash import Dash, Input, Output, dcc, html
 from PIL import Image
 
-IMG_PATH = "assets/Titanic Deck Resized.png"
+IMG_PATH = "assets/ship.png"
 df = pd.read_csv("data/titanic.csv")
 app = Dash(__name__)
 
@@ -39,10 +39,8 @@ DECK_WIDTH, DECK_HEIGHT = get_image_size()
 ENCODED_IMAGE_STRING = load_image()
 
 
-def generate_scatter_coordinates(df, image_width, image_height):
-    """
-    Generates correctly clustered coordinates based on passenger class.
-    """
+def generate_scatter_coordinates(df, image_width, image_height) -> tuple[int, int]:
+    """Generates correctly clustered coordinates based on passenger class"""
     x_coords = np.zeros(len(df))
     y_coords = np.zeros(len(df))
 
@@ -63,12 +61,59 @@ def generate_scatter_coordinates(df, image_width, image_height):
     return x_coords, y_coords
 
 
-def generate_plot(
-    some_sliced_data: pd.DataFrame,
-    deck_width: int = DECK_WIDTH,
-    deck_height: int = DECK_HEIGHT,
-    encoded_image: str = ENCODED_IMAGE_STRING,
-) -> go.Figure:
+def generate_clustered_coordinates(df, max_per_row=20, spacing=0.15) -> pd.DataFrame:
+    """
+    Generates clustered (x, y) coordinates for a DataFrame based on Pclass.
+
+    Args:
+        df (pd.DataFrame): The input DataFrame with a 'Pclass' column.
+        max_per_row (int): The maximum number of points in a single row within each cluster.
+        spacing (float): The distance between each point.
+
+    Returns:
+        pd.DataFrame: The original DataFrame with 'x_pos' and 'y_pos' columns added.
+    """
+    # If we need to offset by x or y
+    # NOTE: initial configuration **heavily** depends on your choice of image and size
+    cluster_x_offsets = {1: 2.65, 2: 5.95, 3: 9.25}
+    cluster_y_offsets = {1: -1.75, 2: -1.75, 3: -1.75}
+
+    # this is our output
+    x_coords = []
+    y_coords = []
+    passenger_ids = []
+
+    # group by pclass
+    grouped_df = df.groupby("Pclass")
+
+    # iterate through each passenger class group
+    for pclass, group in grouped_df:
+        num_in_group = len(group)
+
+        # for this passenger class, we need coordinates
+        for i in range(num_in_group):
+            col_index = i % max_per_row
+            row_index = i // max_per_row
+
+            # increasing x goes right!
+            x = (col_index * spacing) + cluster_x_offsets[pclass]
+            # increasing y goes down!
+            y = -(row_index * spacing) + cluster_y_offsets[pclass]
+
+            x_coords.append(x)
+            y_coords.append(y)
+            passenger_ids.append(group.iloc[i]["PassengerId"])
+
+    # store our output, and merge with original
+    coords_df = pd.DataFrame(
+        {"PassengerId": passenger_ids, "x_coords": x_coords, "y_coords": y_coords}
+    )
+
+    # Merge the coordinates back into the original DataFrame
+    return df.merge(coords_df, on="PassengerId", how="left")
+
+
+def generate_plot(some_sliced_data: pd.DataFrame) -> go.Figure:
     # Prepare hover text
     hover_text = [
         f"{row['Name']}<br>Age: {row['Age']}<br>Fare: £{row['Fare']:.2f}"
@@ -76,56 +121,58 @@ def generate_plot(
     ]
 
     # Generate x and y coords
-    x_coords, y_coords = generate_scatter_coordinates(
-        some_sliced_data, deck_width, deck_height
-    )
+    sliced_data = generate_clustered_coordinates(some_sliced_data)
 
-    # Clip coordinates to ensure they are within the image bounds
-    x_coords = np.clip(x_coords, 0, deck_width)
-    y_coords = np.clip(y_coords, 0, deck_height)
-
-    # Create scatter plot
+    # Plotting stuff
     fig = go.Figure()
-
     fig.add_trace(
         go.Scatter(
-            x=x_coords,
-            y=y_coords,
+            x=sliced_data["x_coords"],
+            y=sliced_data["y_coords"],
             mode="markers",
-            marker=dict(size=8, color=some_sliced_data["Pclass"]),
-            text=hover_text,
+            marker=dict(
+                symbol="circle",
+                color=sliced_data["Pclass"].map(
+                    {1: "#e9bf99", 2: "#a81a0c", 3: "#000000"}
+                ),
+                opacity=0.8,
+            ),
+            # Add hover text to show passenger details on hover
+            hovertext=hover_text,
             hoverinfo="text",
         )
     )
-
-    # Add background image and configure layout
     fig.update_layout(
+        # Add the background image
         images=[
-            dict(
-                source=encoded_image,
-                xref="x",
-                yref="y",
+            go.layout.Image(
+                source=ENCODED_IMAGE_STRING,
+                xref="paper",
+                yref="paper",
                 x=0,
-                y=deck_height,
-                sizex=deck_width,
-                sizey=deck_height,
+                y=1,
+                sizex=1,
+                sizey=0.65,  # Size (100% of the plot area)
                 sizing="stretch",
+                opacity=0.4,
                 layer="below",
             )
         ],
-        xaxis=dict(visible=False, range=[0, deck_width]),
-        yaxis=dict(visible=False, range=[0, deck_height]),
-        width=deck_width,
-        height=deck_height,
-        margin=dict(l=0, r=0, t=40, b=0),
-        # title=dict(text="Location of Unlikely Survivors", x=0.5),
+        # Hide the axes to make the plot look like an image with markers
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[0, 15]),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[-5, 0]),
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        hovermode="closest",
+        width=1200,
+        height=800,
     )
 
     return fig
 
 
 def create_dashboard():
-    """Creates a custom layout for the "Plan Your Next Titanic Journey" dashboard.
+    """Creates a custom layout for the "Titanic Itinerary" dashboard.
 
     This layout includes a title, a dropdown for scenario selection, and
     placeholders for a ship image and summary statistics.
@@ -153,7 +200,7 @@ def create_dashboard():
         children=[
             # Header
             html.H1(
-                children="Plan Your Next Titanic Journey",
+                children="Titanic Itinerary",
                 style={
                     "textAlign": "left",
                     "marginBottom": "30px",
