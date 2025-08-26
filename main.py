@@ -310,7 +310,7 @@ def sole_survivor() -> pd.DataFrame:
     one_survivor = grouped.filter(lambda x: (x["Survived"].sum() == 1))
 
     only_survivor = df["Survived"] == 1
-    return one_survivor[only_survivor]
+    return one_survivor.loc[only_survivor, :]
 
 
 def last_minute() -> pd.DataFrame:
