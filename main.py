@@ -1,4 +1,5 @@
 import base64
+
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -82,7 +83,6 @@ def generate_plot(
     x_coords = np.clip(x_coords, 0, deck_width)
     y_coords = np.clip(y_coords, 0, deck_height)
 
-
     # Create scatter plot
     fig = go.Figure()
 
@@ -145,12 +145,11 @@ def create_dashboard():
         style={
             "backgroundColor": "#FFFFFF",
             "color": "#0C39D0",
-            "padding": "5px",
+            "padding": "20px",
             "minHeight": "100vh",
             "fontFamily": "sans-serif",
             "margin-left": "0",
-            "margin-top": '0',
-
+            "margin-top": "0",
         },
         children=[
             # Header
@@ -160,7 +159,7 @@ def create_dashboard():
                     "textAlign": "left",
                     "marginBottom": "30px",
                     "color": "#4A05A3",
-                    "font-family": "sans-serif"
+                    "font-family": "sans-serif",
                 },
             ),
             # Category Dropdown Section
@@ -172,7 +171,12 @@ def create_dashboard():
                         children=[
                             html.Label(
                                 "Select Your Passenger Type:",
-                                style={"fontSize": "18px", "marginBottom": "10px", 'margin-left': '0',"color": "#4A05A3"},
+                                style={
+                                    "fontSize": "18px",
+                                    "marginBottom": "10px",
+                                    "margin-left": "0",
+                                    "color": "#4A05A3",
+                                },
                             ),
                             dcc.Dropdown(
                                 id="category-dropdown",
@@ -232,8 +236,8 @@ def create_dashboard():
             #                         "borderRadius": "5px",
             #                         "height": "450px",
             #                         "backgroundColor": "#263238",
-                                # },
-                            # )
+            # },
+            # )
             #             ],
             #         ),
             #     ],
@@ -273,15 +277,17 @@ def last_minute() -> pd.DataFrame:
     return df.loc[
         (df["Embarked"] == "Q") & ((df["Fare"] <= q_low) | (df["Fare"] >= q_high)), :
     ].copy()
+
+
 def unlikely_survivor() -> pd.DataFrame:
-    '''Passengers who were unlikely to survive based on their characteristics but did
+    """Passengers who were unlikely to survive based on their characteristics but did
     So, people very young or very old who bought **very cheap** tickets and were
-    in third class'''
-    survived = df['Survived'] == 1
-    third_class = df['Pclass'] == 3
-    cheap_fare = df['Fare'] < df['Fare'].quantile(0.25)
-    is_young = df['Age'] <= df['Age'].quantile(0.25)
-    is_old = df['Age'] >= df['Age'].quantile(0.75)
+    in third class"""
+    survived = df["Survived"] == 1
+    third_class = df["Pclass"] == 3
+    cheap_fare = df["Fare"] < df["Fare"].quantile(0.25)
+    is_young = df["Age"] <= df["Age"].quantile(0.25)
+    is_old = df["Age"] >= df["Age"].quantile(0.75)
     Unlikely_Survivor = df[survived & third_class & cheap_fare & (is_young | is_old)]
     return Unlikely_Survivor.copy()
 
@@ -305,30 +311,29 @@ def update_ship_map(category: str):
 
 
 # @app.callback(
-#     Output("summary-stats-placeholder", "text"), Input("category-dropdown", "value")
+#     Output("summary-stats-placeholder", "children"), Input("category-dropdown", "value")
 # )
 # def update_text(category: str):
 #     if category == "Social Climber":
-#         df = social_climbers()
-#     elif category == "Families":
-#         df = family()
-#     elif category == "Last Minute":
-#         df = last_minute()
+#         sub = social_climbers()
+#     elif category == "(Un)Happy Family":
+#         sub = family()
+#     elif category == "Last Minute Ticket":
+#         sub = last_minute()
 
-#     # Build summary dynamically
-#     total = len(df)
-#     survived = df["Survived"].sum()
-#     rate = (survived / total * 100) if total > 0 else 0
+#     total = len(sub)
+#     survived = int(sub["Survived"].sum()) if total else 0
+#     rate = (survived / total * 100) if total else 0.0
+#     male = (sub["Sex"] == "male").sum()
+#     female = (sub["Sex"] == "female").sum()
+#     age = sub["Age"].dropna().mean()
 
-#     summary_text = [
-#         html.H3("Survival Analysis"),
-#         html.P(f"Total Passengers: {total}"),
-#         html.P(f"Survived: {survived}"),
-#         html.P(f"Did Not Survive: {total - survived}"),
-#         html.P(f"Survival Rate: {rate:.2f}%"),
+#     return [
+#         html.H3(f"You have a survival rate of {rate:.2f}%"),
+#         html.P(f"{male} males"),
+#         html.P(f"{female} females"),
+#         html.P(f"{int(age)} years old"),
 #     ]
-
-#     app.layout = html.Div(children=summary_text)
 
 
 def main():
