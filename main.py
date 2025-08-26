@@ -163,7 +163,7 @@ def create_dashboard():
                 className="row",
                 children=[
                     html.Div(
-                        className="twelve columns",
+                        className="category-dropdown-selection",
                         children=[
                             html.Label(
                                 "Are you a...",
@@ -195,60 +195,38 @@ def create_dashboard():
                             "marginBottom": "20px",
                         },
                     ),
-                    dcc.Graph("ship-map"),
                 ],
                 style={"marginBottom": "40px", "textAlign": "center"},
             ),
-            # # Main Content Area (Image and Stats)
-            # html.Div(
-            #     className="row",
-            #     children=[
-            #         # Left side for Ship Image
-            #         html.Div(
-            #             className="seven columns",
-            #             children=[
-            #                 html.Div(
-            #                     children="[Your Ship Image Will Be Displayed Here]",
-            #                     id="ship-image-placeholder",
-            #                     style={
-            #                         "border": "1px dashed #444",
-            #                         "padding": "20px",
-            #                         "textAlign": "center",
-            #                         "borderRadius": "5px",
-            #                         "height": "450px",
-            #                         "display": "flex",
-            #                         "alignItems": "center",
-            #                         "justifyContent": "center",
-            #                         "backgroundColor": "#263238",
-            #                     },
-            #                 )
-            #             ],
-            #         ),
-            #         # Right side for Summary Statistics
-            #         html.Div(
-            #             className="five columns",
-            #             children=[
-            #                 html.Div(
-            #                     children=[
-            #                         html.H4("Analysis Summary"),
-            #                         html.P(
-            #                             "[Summary statistics from the analysed data will be printed out here.]"
-            #                         ),
-            #                     ],
-            #                     id="summary-stats-placeholder",
-            #                     style={
-            #                         "border": "1px dashed #444",
-            #                         "padding": "20px",
-            #                         "textAlign": "center",
-            #                         "borderRadius": "5px",
-            #                         "height": "450px",
-            #                         "backgroundColor": "#263238",
-            # },
-            # )
-            #             ],
-            #         ),
-            #     ],
-            # ),
+            # dcc.Graph("ship-map"),
+            html.Div(
+                className="row",
+                children=[
+                    html.Div(
+                        className="main",
+                        children=[
+                            dcc.Graph(
+                                id="ship-map",
+                                style={
+                                    "flex": "3 1 0%",
+                                    # "minWidth": "0",  # helps with overflow
+                                },
+                            )
+                        ],
+                    ),
+                    html.Div(
+                        className="main",
+                        children=[html.P("")],
+                        id="summary-stats",
+                        style={
+                            "flex": "2 1 0%",
+                            "background": "#f5f6fa",
+                            "borderRadius": "24px",  # optional, for rounded corners
+                        },
+                    ),
+                ],
+                style={"marginTop": "24px"},
+            ),
         ],
     )
 
@@ -317,30 +295,30 @@ def update_ship_map(category: str):
         return generate_plot(slice)
 
 
-# @app.callback(
-#     Output("summary-stats-placeholder", "children"), Input("category-dropdown", "value")
-# )
-# def update_text(category: str):
-#     if category == "Social Climber":
-#         sub = social_climbers()
-#     elif category == "(Un)Happy Family":
-#         sub = family()
-#     elif category == "Last Minute Ticket":
-#         sub = last_minute()
+@app.callback(Output("summary-stats", "children"), Input("category-dropdown", "value"))
+def update_text(category: str):
+    if category == "Social Climber":
+        sub = social_climbers()
+    elif category == "(Un)Happy Family":
+        sub = family()
+    elif category == "Last Minute Ticket":
+        sub = last_minute()
+    elif category == "Unlikely Survivor":
+        sub = unlikely_survivor()
 
-#     total = len(sub)
-#     survived = int(sub["Survived"].sum()) if total else 0
-#     rate = (survived / total * 100) if total else 0.0
-#     male = (sub["Sex"] == "male").sum()
-#     female = (sub["Sex"] == "female").sum()
-#     age = sub["Age"].dropna().mean()
+    total = len(sub)
+    survived = int(sub["Survived"].sum()) if total else 0
+    rate = (survived / total * 100) if total else 0.0
+    male = (sub["Sex"] == "male").sum()
+    female = (sub["Sex"] == "female").sum()
+    age = sub["Age"].dropna().mean()
 
-#     return [
-#         html.H3(f"You have a survival rate of {rate:.2f}%"),
-#         html.P(f"{male} males"),
-#         html.P(f"{female} females"),
-#         html.P(f"{int(age)} years old"),
-#     ]
+    return [
+        html.H3(f"You have a survival rate of {rate:.2f}%"),
+        html.P(f"{male} males"),
+        html.P(f"{female} females"),
+        html.P(f"{int(age)} years old"),
+    ]
 
 
 def main():
