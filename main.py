@@ -326,11 +326,11 @@ def last_minute() -> pd.DataFrame:
 def against_all_odds() -> pd.DataFrame:
     """People unlikely to survive in general"""
     # survived = df["Survived"] == 1
-    # third_class = df["Pclass"] == 3
+    third_class = df["Pclass"] == 3
     cheap_fare = df["Fare"] < df["Fare"].quantile(0.25)
     is_young = df["Age"] <= df["Age"].quantile(0.10)
     is_old = df["Age"] >= df["Age"].quantile(0.10)
-    unlikely = df[cheap_fare & (is_young | is_old)]
+    unlikely = df[cheap_fare & (is_young | is_old) & third_class]
     return unlikely.copy()
 
 
