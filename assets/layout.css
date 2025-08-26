@@ -42,7 +42,7 @@
 
 /* This rule applies to the outer div and handles the box layout */
 .info {
-    background-color: #f0e0d0;
+    background-color: #edcfb0;
     padding: 10px;
     border-radius: 8px;
     display: flex;
