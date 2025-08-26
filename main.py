@@ -273,6 +273,17 @@ def last_minute() -> pd.DataFrame:
     return df.loc[
         (df["Embarked"] == "Q") & ((df["Fare"] <= q_low) | (df["Fare"] >= q_high)), :
     ].copy()
+def unlikely_survivor() -> pd.DataFrame:
+    '''Passengers who were unlikely to survive based on their characteristics but did
+    So, people very young or very old who bought **very cheap** tickets and were
+    in third class'''
+    survived = df['Survived'] == 1
+    third_class = df['Pclass'] == 3
+    cheap_fare = df['Fare'] < df['Fare'].quantile(0.25)
+    is_young = df['Age'] <= df['Age'].quantile(0.25)
+    is_old = df['Age'] >= df['Age'].quantile(0.75)
+    Unlikely_Survivor = df[survived & third_class & cheap_fare & (is_young | is_old)]
+    return Unlikely_Survivor.copy()
 
 
 @app.callback(Output("ship-map", "figure"), Input("category-dropdown", "value"))
@@ -284,6 +295,9 @@ def update_ship_map(category: str):
         return generate_plot(slice)
     elif category == "(Un)Happy Family":
         slice = family()
+        return generate_plot(slice)
+    elif category == "Unlikely Survivor":
+        slice = unlikely_survivor()
         return generate_plot(slice)
     elif category == "Last Minute Ticket":
         slice = last_minute()
