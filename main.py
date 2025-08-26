@@ -198,7 +198,7 @@ def create_dashboard():
                 children=[
                     # Header
                     html.H1(
-                        children="Titanic Itinerary",
+                        children="A Helpful Guide to Planning Your 2027 Titanic Itinerary",
                         style={
                             "textAlign": "left",
                             "marginBottom": "30px",
