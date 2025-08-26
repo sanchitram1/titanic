@@ -144,10 +144,8 @@ def create_dashboard():
     app.layout = html.Div(
         style={
             "backgroundColor": "#FFFFFF",
-            "color": "#0C39D0",
             "padding": "20px",
             "minHeight": "100vh",
-            "fontFamily": "sans-serif",
             "margin-left": "0",
             "margin-top": "0",
         },
@@ -158,8 +156,6 @@ def create_dashboard():
                 style={
                     "textAlign": "left",
                     "marginBottom": "30px",
-                    "color": "#4A05A3",
-                    "font-family": "sans-serif",
                 },
             ),
             # Category Dropdown Section
@@ -170,25 +166,36 @@ def create_dashboard():
                         className="twelve columns",
                         children=[
                             html.Label(
-                                "Select Your Passenger Type:",
+                                "Are you a...",
                                 style={
-                                    "fontSize": "18px",
-                                    "marginBottom": "10px",
-                                    "margin-left": "0",
-                                    "color": "#4A05A3",
+                                    "marginRight": "16px",
+                                    "marginBottom": "0",
+                                    "marginLeft": "0",
+                                    "width": "200px",
                                 },
                             ),
                             dcc.Dropdown(
                                 id="category-dropdown",
                                 options=titanic_categories,
-                                value="Social Climber",  # Default value
+                                value="Social Climber",
                                 clearable=False,
-                                style={"color": "#333"},
+                                style={
+                                    "marginRight": "16px",
+                                    "marginBottom": "0",
+                                    "marginLeft": "0",
+                                    "width": "400px",
+                                },
                             ),
-                            dcc.Graph("ship-map"),
                         ],
-                        style={"maxWidth": "600px", "margin-left": "0"},
-                    )
+                        style={
+                            "display": "flex",
+                            "alignItems": "center",
+                            "maxWidth": "600px",
+                            # "justifyContent": "flex-start",
+                            "marginBottom": "20px",
+                        },
+                    ),
+                    dcc.Graph("ship-map"),
                 ],
                 style={"marginBottom": "40px", "textAlign": "center"},
             ),
