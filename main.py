@@ -1,13 +1,11 @@
 import base64
-
-import dash_html_components as html
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from dash import Dash, Input, Output, dcc, html
 from PIL import Image
 
-IMG_PATH = "assets/Titanic Deck.png"
+IMG_PATH = "assets/Titanic Deck Resized.png"
 df = pd.read_csv("data/titanic.csv")
 app = Dash(__name__)
 
@@ -144,8 +142,8 @@ def create_dashboard():
     # Define the Dashboard Layout
     app.layout = html.Div(
         style={
-            "backgroundColor": "#1E2A38",
-            "color": "#EAEAEA",
+            "backgroundColor": "#FFFFFF",
+            "color": "#0C39D0",
             "padding": "20px",
             "minHeight": "100vh",
             "fontFamily": "sans-serif",
