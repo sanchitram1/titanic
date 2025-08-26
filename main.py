@@ -145,18 +145,22 @@ def create_dashboard():
         style={
             "backgroundColor": "#FFFFFF",
             "color": "#0C39D0",
-            "padding": "20px",
+            "padding": "5px",
             "minHeight": "100vh",
             "fontFamily": "sans-serif",
+            "margin-left": "0",
+            "margin-top": '0',
+
         },
         children=[
             # Header
             html.H1(
                 children="Plan Your Next Titanic Journey",
                 style={
-                    "textAlign": "center",
+                    "textAlign": "left",
                     "marginBottom": "30px",
-                    "color": "#FFFFFF",
+                    "color": "#4A05A3",
+                    "font-family": "sans-serif"
                 },
             ),
             # Category Dropdown Section
@@ -168,7 +172,7 @@ def create_dashboard():
                         children=[
                             html.Label(
                                 "Select Your Passenger Type:",
-                                style={"fontSize": "18px", "marginBottom": "10px"},
+                                style={"fontSize": "18px", "marginBottom": "10px", 'margin-left': '0',"color": "#4A05A3"},
                             ),
                             dcc.Dropdown(
                                 id="category-dropdown",
@@ -179,61 +183,61 @@ def create_dashboard():
                             ),
                             dcc.Graph("ship-map"),
                         ],
-                        style={"maxWidth": "600px", "margin": "0 auto"},
+                        style={"maxWidth": "600px", "margin-left": "0"},
                     )
                 ],
                 style={"marginBottom": "40px", "textAlign": "center"},
             ),
-            # Main Content Area (Image and Stats)
-            html.Div(
-                className="row",
-                children=[
-                    # Left side for Ship Image
-                    html.Div(
-                        className="seven columns",
-                        children=[
-                            html.Div(
-                                children="[Your Ship Image Will Be Displayed Here]",
-                                id="ship-image-placeholder",
-                                style={
-                                    "border": "1px dashed #444",
-                                    "padding": "20px",
-                                    "textAlign": "center",
-                                    "borderRadius": "5px",
-                                    "height": "450px",
-                                    "display": "flex",
-                                    "alignItems": "center",
-                                    "justifyContent": "center",
-                                    "backgroundColor": "#263238",
-                                },
-                            )
-                        ],
-                    ),
-                    # Right side for Summary Statistics
-                    html.Div(
-                        className="five columns",
-                        children=[
-                            html.Div(
-                                children=[
-                                    html.H4("Analysis Summary"),
-                                    html.P(
-                                        "[Summary statistics from the analysed data will be printed out here.]"
-                                    ),
-                                ],
-                                id="summary-stats-placeholder",
-                                style={
-                                    "border": "1px dashed #444",
-                                    "padding": "20px",
-                                    "textAlign": "center",
-                                    "borderRadius": "5px",
-                                    "height": "450px",
-                                    "backgroundColor": "#263238",
-                                },
-                            )
-                        ],
-                    ),
-                ],
-            ),
+            # # Main Content Area (Image and Stats)
+            # html.Div(
+            #     className="row",
+            #     children=[
+            #         # Left side for Ship Image
+            #         html.Div(
+            #             className="seven columns",
+            #             children=[
+            #                 html.Div(
+            #                     children="[Your Ship Image Will Be Displayed Here]",
+            #                     id="ship-image-placeholder",
+            #                     style={
+            #                         "border": "1px dashed #444",
+            #                         "padding": "20px",
+            #                         "textAlign": "center",
+            #                         "borderRadius": "5px",
+            #                         "height": "450px",
+            #                         "display": "flex",
+            #                         "alignItems": "center",
+            #                         "justifyContent": "center",
+            #                         "backgroundColor": "#263238",
+            #                     },
+            #                 )
+            #             ],
+            #         ),
+            #         # Right side for Summary Statistics
+            #         html.Div(
+            #             className="five columns",
+            #             children=[
+            #                 html.Div(
+            #                     children=[
+            #                         html.H4("Analysis Summary"),
+            #                         html.P(
+            #                             "[Summary statistics from the analysed data will be printed out here.]"
+            #                         ),
+            #                     ],
+            #                     id="summary-stats-placeholder",
+            #                     style={
+            #                         "border": "1px dashed #444",
+            #                         "padding": "20px",
+            #                         "textAlign": "center",
+            #                         "borderRadius": "5px",
+            #                         "height": "450px",
+            #                         "backgroundColor": "#263238",
+                                # },
+                            # )
+            #             ],
+            #         ),
+            #     ],
+            # ),
         ],
     )
 
