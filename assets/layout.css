@@ -6,6 +6,7 @@
     margin-top: 0;
     padding-right: 60px;
     padding-left: 40px;
+    /* align-items: stretch; */
 }
 
 .row {
@@ -14,12 +15,15 @@
     width: 100%;
     gap: 24px;
     justify-content: center;
-    align-items: center;
+    align-items: stretch;
     margin-bottom: 40px;
+    padding-top: 20px;
+    padding-bottom: 0px;
 }
 
 .main {
     padding: 16px;
+    padding-top: 0px;
 }
 
 /* This rule applies to the outer div and handles the box layout */
@@ -33,6 +37,7 @@
     /* Aligns content to the top instead of the center */
     justify-content: flex-start;
     align-items: center;
+    min-height: 50px;
 }
 
 /* This new rule handles the styling for the large metric numbers */
@@ -59,6 +64,7 @@
     flex: 0 0 60%; 
     justify-content: space-around;
     gap: 20px;
+    align-items: stretch;
 }
 
 .category-dropdown-container {

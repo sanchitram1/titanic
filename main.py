@@ -117,7 +117,7 @@ def generate_clustered_coordinates(df, max_per_row=20, spacing=0.15) -> pd.DataF
 def generate_plot(some_sliced_data: pd.DataFrame) -> go.Figure:
     # Prepare hover text
     hover_text = [
-        f"{row['Name']}<br>Age: {row['Age']}<br>Fare: £{row['Fare']:.2f}"
+        f"{row['Name']}<br>Age: {'-' if pd.isna(row['Age']) else str(int(row['Age']))}<br>Fare: £{row['Fare']:.2f}"
         for _, row in some_sliced_data.iterrows()
     ]
 
@@ -265,13 +265,23 @@ def create_dashboard():
                         ],
                     ),
                     html.Div(
-                        className="main-section",
+                        style={
+                            "transform": "scale(1.4)",
+                            "transformOrigin": "top left",
+                            "marginLeft": "-4.55%",  # /* (100 - 111.1)/2 = -5.55 */
+                        },
                         children=[
                             html.Div(
-                                className="main", children=[dcc.Graph(id="ship-map")]
+                                className="main-section",
+                                children=[
+                                    html.Div(
+                                        className="main",
+                                        children=[dcc.Graph(id="ship-map")],
+                                    )
+                                ],
+                                style={"marginTop": "24px"},
                             )
                         ],
-                        style={"marginTop": "24px"},
                     ),
                 ],
             )
