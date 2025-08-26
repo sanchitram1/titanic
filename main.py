@@ -234,12 +234,6 @@ def create_dashboard():
                             html.Div(
                                 className="metrics-container",
                                 children=[
-                                    # Total passengers
-                                    html.Div(
-                                        className="info",
-                                        id="total-passengers",
-                                        children=["-- passengers"],
-                                    ),
                                     # Survival Percentage
                                     html.Div(
                                         className="info",
@@ -334,8 +328,8 @@ def against_all_odds() -> pd.DataFrame:
     # survived = df["Survived"] == 1
     third_class = df["Pclass"] == 3
     cheap_fare = df["Fare"] < df["Fare"].quantile(0.25)
-    is_young = df["Age"] <= df["Age"].quantile(0.10)
-    is_old = df["Age"] >= df["Age"].quantile(0.10)
+    is_young = df["Age"] <= df["Age"].quantile(0.20)
+    is_old = df["Age"] >= df["Age"].quantile(0.80)
     unlikely = df[cheap_fare & (is_young | is_old) & third_class]
     return unlikely.copy()
 
@@ -395,19 +389,6 @@ def update_age(category: str):
         html.P(f"{sub['Age'].mean():.0f}y", className="metric-value"),
         html.Div(style={"flexGrow": "1"}),
         html.P("average age", className="metric-label"),
-    ]
-
-
-@app.callback(
-    Output("total-passengers", "children"), Input("category-dropdown", "value")
-)
-def update_total_passengers(category: str):
-    """Regenerates average age metric based on selection"""
-    sub = get_selected_df(category)
-    return [
-        html.P(f"{sub.shape[0]:.0f}", className="metric-value"),
-        html.Div(style={"flexGrow": "1"}),
-        html.P("passengers", className="metric-label"),
     ]
 
 
