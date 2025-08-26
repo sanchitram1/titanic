@@ -1,0 +1,95 @@
+.dashboard {
+    background-color: "#FFFFFF";
+    padding: 20px;
+    min-height: 100vh;
+    margin-left: 0;
+    margin-top: 0;
+    padding-right: 60px;
+    padding-left: 40px;
+    position: relative 
+}
+
+.main-section {
+    /* Take it out of the document flow */
+    position: absolute;
+    /* Place it behind everything else */
+    z-index: -1;
+    /* Position it from the top of the dashboard container */
+    top: -100px;
+    /* You will need to fine-tune this value */
+    /* Make sure it spans the width of the container */
+    left: 0;
+    right: 0;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    gap: 24px;
+    justify-content: center;
+    align-items: stretch;
+    margin-bottom: 40px;
+    padding-top: 20px;
+    padding-bottom: 0px;
+    z-index: 2;
+}
+
+.main {
+    padding: 16px;
+    padding-top: 0px;
+}
+
+/* This rule applies to the outer div and handles the box layout */
+.info {
+    background-color: #edcfb0;
+    padding: 10px;
+    border-radius: 8px;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    /* Aligns content to the top instead of the center */
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 50px;
+    z-index: 2;
+}
+
+/* This new rule handles the styling for the large metric numbers */
+.metric-value {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin: 0;
+    /* Remove default paragraph margin */
+    padding: 0;
+    z-index: 2;
+}
+
+/* This new rule handles the styling for the small labels */
+.metric-label {
+    font-size: 18px;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    font-style: italic;
+    z-index: 2;
+}
+
+.metrics-container {
+    display: flex;
+    flex: 0 0 60%; 
+    justify-content: space-around;
+    gap: 20px;
+    align-items: stretch;
+    z-index: 2;
+}
+
+.category-dropdown-container {
+    display: flex;
+    align-items: center;
+    flex: 0 0 40%; 
+    margin-right: 16px;
+    margin-left: 50px;
+    z-index: 2;
+}

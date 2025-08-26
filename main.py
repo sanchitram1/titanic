@@ -3,10 +3,12 @@ import base64
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
+from dash import Dash, Input, Output, dcc, html
 from PIL import Image
 
-IMG_PATH = "assets/Titanic Deck.png"
+IMG_PATH = "assets/ship.png"
 df = pd.read_csv("data/titanic.csv")
+app = Dash(__name__)
 
 
 def load_image() -> str:
@@ -19,9 +21,7 @@ def load_image() -> str:
         encoded_image_string = f"data:image/jpeg;base64,{encoded_image_string}"
 
     except FileNotFoundError as e:
-        print(
-            f"Error: The image file '{IMG_PATH}' was not found. Please check the file path."
-        )
+        print(f"'{IMG_PATH}' was not found. Please check the file path.")
         raise e
 
     return encoded_image_string
@@ -32,10 +32,14 @@ def get_image_size():
     return deck_img.size
 
 
-def generate_scatter_coordinates(df, image_width, image_height):
-    """
-    Generates correctly clustered coordinates based on passenger class.
-    """
+# Some constants that are useful for how we're rendering the images
+DECK_WIDTH, DECK_HEIGHT = get_image_size()
+ENCODED_IMAGE_STRING = load_image()
+
+
+# deprecated, but a fun function
+def generate_scatter_coordinates(df, image_width, image_height) -> tuple[int, int]:
+    """Generates correctly clustered coordinates based on passenger class"""
     x_coords = np.zeros(len(df))
     y_coords = np.zeros(len(df))
 
@@ -56,85 +60,377 @@ def generate_scatter_coordinates(df, image_width, image_height):
     return x_coords, y_coords
 
 
-def generate_plot(
-    some_sliced_data: pd.DataFrame,
-    deck_width: int,
-    deck_height: int,
-    encoded_image: str,
-) -> go.Figure:
+def generate_clustered_coordinates(df, max_per_row=20, spacing=0.15) -> pd.DataFrame:
+    """
+    Generates clustered (x, y) coordinates for a DataFrame based on Pclass.
+
+    Args:
+        df (pd.DataFrame): The input DataFrame with a 'Pclass' column.
+        max_per_row (int): The maximum number of points in a single row within each cluster.
+        spacing (float): The distance between each point.
+
+    Returns:
+        pd.DataFrame: The original DataFrame with 'x_pos' and 'y_pos' columns added.
+    """
+    # If we need to offset by x or y
+    # NOTE: initial configuration **heavily** depends on your choice of image and size
+    cluster_x_offsets = {1: 2.65, 2: 5.95, 3: 9.25}
+    cluster_y_offsets = {1: -1.75, 2: -1.75, 3: -1.75}
+
+    # this is our output
+    x_coords = []
+    y_coords = []
+    passenger_ids = []
+
+    # group by pclass
+    grouped_df = df.groupby("Pclass")
+
+    # iterate through each passenger class group
+    for pclass, group in grouped_df:
+        num_in_group = len(group)
+
+        # for this passenger class, we need coordinates
+        for i in range(num_in_group):
+            col_index = i % max_per_row
+            row_index = i // max_per_row
+
+            # increasing x goes right!
+            x = (col_index * spacing) + cluster_x_offsets[pclass]
+            # increasing y goes down!
+            y = -(row_index * spacing) + cluster_y_offsets[pclass]
+
+            x_coords.append(x)
+            y_coords.append(y)
+            passenger_ids.append(group.iloc[i]["PassengerId"])
+
+    # store our output, and merge with original
+    coords_df = pd.DataFrame(
+        {"PassengerId": passenger_ids, "x_coords": x_coords, "y_coords": y_coords}
+    )
+
+    # Merge the coordinates back into the original DataFrame
+    return df.merge(coords_df, on="PassengerId", how="left")
+
+
+def generate_plot(some_sliced_data: pd.DataFrame) -> go.Figure:
     # Prepare hover text
     hover_text = [
-        f"{row['Name']}<br>Age: {row['Age']}<br>Fare: £{row['Fare']:.2f}"
+        f"{row['Name']}<br>Age: {'-' if pd.isna(row['Age']) else str(int(row['Age']))}<br>Fare: £{row['Fare']:.2f}"
         for _, row in some_sliced_data.iterrows()
     ]
 
     # Generate x and y coords
-    x_coords, y_coords = generate_scatter_coordinates(
-        some_sliced_data, deck_width, deck_height
-    )
+    sliced_data = generate_clustered_coordinates(some_sliced_data)
 
-    # Clip coordinates to ensure they are within the image bounds
-    x_coords = np.clip(x_coords, 0, deck_width)
-    y_coords = np.clip(y_coords, 0, deck_height)
-
-    # Create scatter plot
+    # Plotting stuff
     fig = go.Figure()
-
     fig.add_trace(
         go.Scatter(
-            x=x_coords,
-            y=y_coords,
+            x=sliced_data["x_coords"],
+            y=sliced_data["y_coords"],
             mode="markers",
-            marker=dict(size=12, color="blue"),
-            text=hover_text,
+            marker=dict(
+                symbol="circle",
+                color=sliced_data["Pclass"].map(
+                    {1: "#e9bf99", 2: "#a81a0c", 3: "#000000"}
+                ),
+                # opacity=1.0,
+            ),
+            # Add hover text to show passenger details on hover
+            hovertext=hover_text,
             hoverinfo="text",
         )
     )
-
-    # Add background image and configure layout
     fig.update_layout(
+        # Add the background image
         images=[
-            dict(
-                source=encoded_image,
-                xref="x",
-                yref="y",
+            go.layout.Image(
+                source=ENCODED_IMAGE_STRING,
+                xref="paper",
+                yref="paper",
                 x=0,
-                y=deck_height,
-                sizex=deck_width,
-                sizey=deck_height,
+                y=1,
+                sizex=1,
+                sizey=0.65,  # Size (100% of the plot area)
                 sizing="stretch",
+                # opacity=0.4,
                 layer="below",
             )
         ],
-        xaxis=dict(visible=False, range=[0, deck_width]),
-        yaxis=dict(visible=False, range=[0, deck_height]),
-        width=deck_width,
-        height=deck_height,
-        margin=dict(l=0, r=0, t=40, b=0),
-        # title=dict(text="Location of Unlikely Survivors", x=0.5),
+        # Hide the axes to make the plot look like an image with markers
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[0, 15]),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[-5, 0]),
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        hovermode="closest",
+        width=1200,
+        height=800,
     )
 
     return fig
 
 
-def main():
-    # THIS IS AN EXAMPLE FOR SOCIAL CLIMBERS
-    fare_q1 = df["Fare"].quantile(0.25)
+def create_dashboard():
+    """Creates a custom layout for the "Titanic Itinerary" dashboard.
 
-    # Filter for the specified conditions
-    social_climbers = df[
-        (df["Pclass"] == 3)
-        & (df["Fare"] <= fare_q1)
+    This layout includes a title, a dropdown for scenario selection, options for info
+    metrics, and a ship map"""
+
+    # Define the categories for the dropdown menu
+    titanic_categories = [
+        {"label": "Social Climber", "value": "Social Climber"},
+        {"label": "Last Minute Ticket", "value": "Last Minute Ticket"},
+        {"label": "Against All Odds", "value": "Against All Odds"},
+        {"label": "Sole Survivor", "value": "Sole Survivor"},
+    ]
+
+    # Define the Dashboard Layout
+    app.layout = html.Div(
+        style={
+            "transform": "scale(0.9)",
+            "transformOrigin": "top center",
+            "width": "111.1%",  # /* 100 / 0.9 = 111.1 */
+            "marginLeft": "-5.55%",  # /* (100 - 111.1)/2 = -5.55 */
+        },
+        children=[
+            html.Div(
+                className="dashboard",
+                children=[
+                    # Header
+                    html.H1(
+                        children="A Helpful Guide to Planning Your 2027 Titanic Itinerary",
+                        style={
+                            "textAlign": "left",
+                            "marginBottom": "30px",
+                        },
+                    ),
+                    # Top section
+                    html.Div(
+                        className="row",
+                        children=[
+                            # This is the container for the dropdown and its label
+                            html.Div(
+                                className="category-dropdown-container",
+                                children=[
+                                    html.Label(
+                                        "Are you a...",
+                                        style={
+                                            "marginRight": "16px",
+                                            "whiteSpace": "nowrap",  # no wrap!
+                                        },
+                                    ),
+                                    dcc.Dropdown(
+                                        id="category-dropdown",
+                                        options=titanic_categories,
+                                        value="Social Climber",
+                                        clearable=False,
+                                        style={
+                                            "flexGrow": "1",  # Allow the dropdown to grow
+                                        },
+                                    ),
+                                ],
+                            ),
+                            # This is the container for the four metrics
+                            html.Div(
+                                className="metrics-container",
+                                children=[
+                                    # Total passengers
+                                    html.Div(
+                                        className="info",
+                                        id="total-passengers",
+                                        children=["-- passengers"],
+                                    ),
+                                    # Survival Percentage
+                                    html.Div(
+                                        className="info",
+                                        id="survival-percentage",
+                                        children=["--% survival"],
+                                    ),
+                                    # Number of Males
+                                    html.Div(
+                                        className="info",
+                                        id="number-of-males",
+                                        children=["-- males"],
+                                    ),
+                                    # Number of Females
+                                    html.Div(
+                                        className="info",
+                                        id="number-of-females",
+                                        children=["-- females"],
+                                    ),
+                                    # Average Age
+                                    html.Div(
+                                        className="info",
+                                        id="average-age",
+                                        children=["-- avg age"],
+                                    ),
+                                ],
+                            ),
+                        ],
+                    ),
+                    html.Div(
+                        style={
+                            "transform": "scale(1.4)",
+                            "transformOrigin": "top left",
+                            "marginLeft": "-4.55%",  # /* (100 - 111.1)/2 = -5.55 */
+                        },
+                        children=[
+                            html.Div(
+                                className="main-section",
+                                children=[
+                                    html.Div(
+                                        className="main",
+                                        children=[dcc.Graph(id="ship-map")],
+                                    )
+                                ],
+                                style={"marginTop": "24px"},
+                            )
+                        ],
+                    ),
+                ],
+            )
+        ],
+    )
+
+
+# These are all the functions that generate our datasets
+def social_climbers() -> pd.DataFrame:
+    """For the social climbers, we can look a bit at those who paid the lowest amount
+    and traveled solo...in the hope of meeting someone who punched wayyyy above their
+    weight"""
+    lowest_fare_quantile = 0.10
+    social_climbers_df = df[
+        (df["Fare"] <= df["Fare"].quantile(lowest_fare_quantile))
         & (df["SibSp"] == 0)
         & (df["Parch"] == 0)
-    ].copy()  # Use .copy() to avoid SettingWithCopyWarning
+    ].copy()
 
-    # END EXAMPLE
+    return social_climbers_df
 
-    encoded_image = load_image()
-    deck_width, deck_height = get_image_size()
-    fig = generate_plot(social_climbers, deck_width, deck_height, encoded_image)
-    fig.show()
+
+def sole_survivor() -> pd.DataFrame:
+    """Families who had exactly one survivor"""
+    # family means either sibling or parent
+    families = df.loc[(df["SibSp"] + df["Parch"]) > 0, :].copy()
+    grouped = families.groupby("Ticket")
+    one_survivor = grouped.filter(lambda x: (x["Survived"].sum() == 1))
+
+    only_survivor = df["Survived"] == 1
+    return one_survivor.loc[only_survivor, :]
+
+
+def last_minute() -> pd.DataFrame:
+    """Last minute attempts to find last minute ticket purchases, but looking at
+    people who boarded from Queenstown, and purchased either **very expensive** or
+    **very cheap** tickets"""
+    q = 0.25
+    q_low = df["Fare"].quantile(q)
+    q_high = df["Fare"].quantile(1 - q)
+    return df.loc[
+        (df["Embarked"] == "Q") & ((df["Fare"] <= q_low) | (df["Fare"] >= q_high)), :
+    ].copy()
+
+
+def against_all_odds() -> pd.DataFrame:
+    """People unlikely to survive in general"""
+    # survived = df["Survived"] == 1
+    third_class = df["Pclass"] == 3
+    cheap_fare = df["Fare"] < df["Fare"].quantile(0.25)
+    is_young = df["Age"] <= df["Age"].quantile(0.20)
+    is_old = df["Age"] >= df["Age"].quantile(0.80)
+    unlikely = df[cheap_fare & (is_young | is_old) & third_class]
+    return unlikely.copy()
+
+
+# And here are all the callbacks
+@app.callback(Output("ship-map", "figure"), Input("category-dropdown", "value"))
+def update_ship_map(category: str):
+    """Regenerates ship map based on selection"""
+    slice = get_selected_df(category)
+    return generate_plot(slice)
+
+
+@app.callback(
+    Output("survival-percentage", "children"), Input("category-dropdown", "value")
+)
+def update_survival_percentage(category: str):
+    """Regenerates survival percentage metric based on selection"""
+    sub = get_selected_df(category)
+    return [
+        html.P(f"{sub['Survived'].mean() * 100:.2f}%", className="metric-value"),
+        html.Div(style={"flexGrow": "1"}),
+        html.P("survival odds", className="metric-label"),
+    ]
+
+
+@app.callback(
+    Output("number-of-males", "children"), Input("category-dropdown", "value")
+)
+def update_males(category: str):
+    """Regenerates number of males metric based on selection"""
+    sub = get_selected_df(category)
+    return [
+        html.P(f"{len(sub[sub['Sex'] == 'male']):.0f}", className="metric-value"),
+        html.Div(style={"flexGrow": "1"}),
+        html.P("males", className="metric-label"),
+    ]
+
+
+@app.callback(
+    Output("number-of-females", "children"), Input("category-dropdown", "value")
+)
+def update_females(category: str):
+    """Regenerates number of females metric based on selection"""
+    sub = get_selected_df(category)
+    return [
+        html.P(f"{len(sub[sub['Sex'] == 'female']):.0f}", className="metric-value"),
+        html.Div(style={"flexGrow": "1"}),
+        html.P("females", className="metric-label"),
+    ]
+
+
+@app.callback(Output("average-age", "children"), Input("category-dropdown", "value"))
+def update_age(category: str):
+    """Regenerates average age metric based on selection"""
+    sub = get_selected_df(category)
+    return [
+        html.P(f"{sub['Age'].mean():.0f}y", className="metric-value"),
+        html.Div(style={"flexGrow": "1"}),
+        html.P("average age", className="metric-label"),
+    ]
+
+
+@app.callback(
+    Output("total-passengers", "children"), Input("category-dropdown", "value")
+)
+def update_total_passengers(category: str):
+    """Regenerates average age metric based on selection"""
+    sub = get_selected_df(category)
+    return [
+        html.P(f"{sub.shape[0]:.0f}", className="metric-value"),
+        html.Div(style={"flexGrow": "1"}),
+        html.P("passengers", className="metric-label"),
+    ]
+
+
+def get_selected_df(category: str) -> pd.DataFrame:
+    """Helper to encapsulate the logic that figures out which dataset to return based
+    on user selection"""
+    if category == "Social Climber":
+        return social_climbers()
+    elif category == "Sole Survivor":
+        return sole_survivor()
+    elif category == "Last Minute Ticket":
+        return last_minute()
+    elif category == "Against All Odds":
+        return against_all_odds()
+
+    raise ValueError(f"Bad category: {category}")
+
+
+def main():
+    create_dashboard()
+    app.run(debug=True)
 
 
 if __name__ == "__main__":
