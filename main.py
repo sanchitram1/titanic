@@ -154,7 +154,7 @@ def generate_plot(some_sliced_data: pd.DataFrame) -> go.Figure:
                 sizex=1,
                 sizey=0.65,  # Size (100% of the plot area)
                 sizing="stretch",
-                opacity=0.4,
+                # opacity=0.4,
                 layer="below",
             )
         ],
@@ -206,20 +206,32 @@ def create_dashboard():
                     "marginBottom": "30px",
                 },
             ),
-            # Category Dropdown Section
+            # Top section
             html.Div(
                 className="row",
+                style={
+                    "display": "flex",
+                    "justifyContent": "center",
+                    "alignItems": "center",
+                    "marginBottom": "40px",
+                },
                 children=[
+                    # This is the container for the dropdown and its label
                     html.Div(
-                        className="category-dropdown-selection",
+                        className="category-dropdown-container",
+                        style={
+                            "display": "flex",  # flexbox to align the label + dropdown
+                            "alignItems": "center",  # aligned vertically
+                            "flex": "0 0 40%",  # Allocate 40% of the parent's width to this container
+                            "marginRight": "16px",
+                            "marginLeft": "50px",
+                        },
                         children=[
                             html.Label(
                                 "Are you a...",
                                 style={
                                     "marginRight": "16px",
-                                    "marginBottom": "0",
-                                    "marginLeft": "0",
-                                    "width": "200px",
+                                    "whiteSpace": "nowrap",  # no wrap!
                                 },
                             ),
                             dcc.Dropdown(
@@ -228,50 +240,53 @@ def create_dashboard():
                                 value="Social Climber",
                                 clearable=False,
                                 style={
-                                    "marginRight": "16px",
-                                    "marginBottom": "0",
-                                    "marginLeft": "0",
-                                    "width": "400px",
+                                    "flexGrow": "1",  # Allow the dropdown to grow
                                 },
                             ),
                         ],
-                        style={
-                            "display": "flex",
-                            "alignItems": "center",
-                            "maxWidth": "600px",
-                            # "justifyContent": "flex-start",
-                            "marginBottom": "20px",
-                        },
                     ),
-                ],
-                style={"marginBottom": "40px", "textAlign": "center"},
-            ),
-            # dcc.Graph("ship-map"),
-            html.Div(
-                className="row",
-                children=[
+                    # This is the container for the four metrics
                     html.Div(
-                        className="main",
+                        className="metrics-container",
+                        style={
+                            "display": "flex",  # Use flexbox for the metrics
+                            "flex": "0 0 60%",  # Allocate 60% of the parent's width to this container
+                            "justifyContent": "space-around",  # Distribute the metrics evenly
+                            "gap": "20px",
+                        },
                         children=[
-                            dcc.Graph(
-                                id="ship-map",
-                                style={
-                                    "flex": "3 1 0%",
-                                    # "minWidth": "0",  # helps with overflow
-                                },
-                            )
+                            # Survival Percentage
+                            html.Div(
+                                className="info",
+                                id="survival-percentage",
+                                children=["--% survival"],
+                            ),
+                            # Number of Males
+                            html.Div(
+                                className="info",
+                                id="number-of-males",
+                                children=["-- males"],
+                            ),
+                            # Number of Females
+                            html.Div(
+                                className="info",
+                                id="number-of-females",
+                                children=["-- females"],
+                            ),
+                            # Average Age
+                            html.Div(
+                                className="info",
+                                id="average-age",
+                                children=["-- avg age"],
+                            ),
                         ],
                     ),
-                    html.Div(
-                        className="main",
-                        children=[html.P("")],
-                        id="summary-stats",
-                        style={
-                            "flex": "2 1 0%",
-                            "background": "#f5f6fa",
-                            "borderRadius": "24px",  # optional, for rounded corners
-                        },
-                    ),
+                ],
+            ),
+            html.Div(
+                className="main-section",
+                children=[
+                    html.Div(className="main", children=[dcc.Graph(id="ship-map")])
                 ],
                 style={"marginTop": "24px"},
             ),
@@ -343,30 +358,63 @@ def update_ship_map(category: str):
         return generate_plot(slice)
 
 
-@app.callback(Output("summary-stats", "children"), Input("category-dropdown", "value"))
-def update_text(category: str):
-    if category == "Social Climber":
-        sub = social_climbers()
-    elif category == "(Un)Happy Family":
-        sub = family()
-    elif category == "Last Minute Ticket":
-        sub = last_minute()
-    elif category == "Unlikely Survivor":
-        sub = unlikely_survivor()
-
-    total = len(sub)
-    survived = int(sub["Survived"].sum()) if total else 0
-    rate = (survived / total * 100) if total else 0.0
-    male = (sub["Sex"] == "male").sum()
-    female = (sub["Sex"] == "female").sum()
-    age = sub["Age"].dropna().mean()
-
+@app.callback(
+    Output("survival-percentage", "children"), Input("category-dropdown", "value")
+)
+def update_survival_percentage(category: str):
+    sub = get_selected_df(category)
     return [
-        html.H3(f"You have a survival rate of {rate:.2f}%"),
-        html.P(f"{male} males"),
-        html.P(f"{female} females"),
-        html.P(f"{int(age)} years old"),
+        html.P(f"{sub['Survived'].mean() * 100:.2f}%", className="metric-value"),
+        html.Div(style={"flexGrow": "1"}),
+        html.P("survival odds", className="metric-label"),
     ]
+
+
+@app.callback(
+    Output("number-of-males", "children"), Input("category-dropdown", "value")
+)
+def update_males(category: str):
+    sub = get_selected_df(category)
+    return [
+        html.P(f"{len(sub[sub['Sex'] == 'male']):.0f}", className="metric-value"),
+        html.Div(style={"flexGrow": "1"}),
+        html.P("males", className="metric-label"),
+    ]
+
+
+@app.callback(
+    Output("number-of-females", "children"), Input("category-dropdown", "value")
+)
+def update_females(category: str):
+    sub = get_selected_df(category)
+    return [
+        html.P(f"{len(sub[sub['Sex'] == 'female']):.0f}", className="metric-value"),
+        html.Div(style={"flexGrow": "1"}),
+        html.P("females", className="metric-label"),
+    ]
+
+
+@app.callback(Output("average-age", "children"), Input("category-dropdown", "value"))
+def update_age(category: str):
+    sub = get_selected_df(category)
+    return [
+        html.P(f"{sub['Age'].mean():.0f}y", className="metric-value"),
+        html.Div(style={"flexGrow": "1"}),
+        html.P("average age", className="metric-label"),
+    ]
+
+
+def get_selected_df(category: str) -> pd.DataFrame:
+    if category == "Social Climber":
+        return social_climbers()
+    elif category == "(Un)Happy Family":
+        return family()
+    elif category == "Last Minute Ticket":
+        return last_minute()
+    elif category == "Unlikely Survivor":
+        return unlikely_survivor()
+
+    raise ValueError(f"Bad category: {category}")
 
 
 def main():

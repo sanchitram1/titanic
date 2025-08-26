@@ -9,8 +9,34 @@
     padding: 16px;
 }
 
+/* This rule applies to the outer div and handles the box layout */
 .info {
-    color: #e9bf99;
-    font-family: 'Helvetica Neue';
-    font-size: 24px
+    background-color: #f0e0d0;
+    padding: 10px;
+    border-radius: 8px;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    /* Aligns content to the top instead of the center */
+    justify-content: flex-start;
+    align-items: center;
+}
+
+/* This new rule handles the styling for the large metric numbers */
+.metric-value {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin: 0;
+    /* Remove default paragraph margin */
+    padding: 0;
+}
+
+/* This new rule handles the styling for the small labels */
+.metric-label {
+    font-size: 18px;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    font-style: italic;
 }
