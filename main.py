@@ -308,7 +308,9 @@ def sole_survivor() -> pd.DataFrame:
     families = df.loc[(df["SibSp"] + df["Parch"]) > 0, :].copy()
     grouped = families.groupby("Ticket")
     one_survivor = grouped.filter(lambda x: (x["Survived"].sum() == 1))
-    return one_survivor
+
+    only_survivor = df["Survived"] == 1
+    return one_survivor[only_survivor]
 
 
 def last_minute() -> pd.DataFrame:
