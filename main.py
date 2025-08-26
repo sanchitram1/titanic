@@ -190,13 +190,7 @@ def create_dashboard():
 
     # Define the Dashboard Layout
     app.layout = html.Div(
-        style={
-            "backgroundColor": "#FFFFFF",
-            "padding": "20px",
-            "minHeight": "100vh",
-            "margin-left": "0",
-            "margin-top": "0",
-        },
+        className="dashboard",
         children=[
             # Header
             html.H1(
@@ -209,23 +203,10 @@ def create_dashboard():
             # Top section
             html.Div(
                 className="row",
-                style={
-                    "display": "flex",
-                    "justifyContent": "center",
-                    "alignItems": "center",
-                    "marginBottom": "40px",
-                },
                 children=[
                     # This is the container for the dropdown and its label
                     html.Div(
                         className="category-dropdown-container",
-                        style={
-                            "display": "flex",  # flexbox to align the label + dropdown
-                            "alignItems": "center",  # aligned vertically
-                            "flex": "0 0 40%",  # Allocate 40% of the parent's width to this container
-                            "marginRight": "16px",
-                            "marginLeft": "50px",
-                        },
                         children=[
                             html.Label(
                                 "Are you a...",
@@ -248,12 +229,6 @@ def create_dashboard():
                     # This is the container for the four metrics
                     html.Div(
                         className="metrics-container",
-                        style={
-                            "display": "flex",  # Use flexbox for the metrics
-                            "flex": "0 0 60%",  # Allocate 60% of the parent's width to this container
-                            "justifyContent": "space-around",  # Distribute the metrics evenly
-                            "gap": "20px",
-                        },
                         children=[
                             # Survival Percentage
                             html.Div(
@@ -294,6 +269,7 @@ def create_dashboard():
     )
 
 
+# These are all the functions that generate our datasets
 def social_climbers() -> pd.DataFrame:
     """For the social climbers, we can look a bit at those who paid the lowest amount
     and traveled solo...in the hope of meeting someone who punched wayyyy above their
@@ -340,22 +316,13 @@ def unlikely_survivor() -> pd.DataFrame:
     return Unlikely_Survivor.copy()
 
 
+# And here are all the callbacks
 @app.callback(Output("ship-map", "figure"), Input("category-dropdown", "value"))
 def update_ship_map(category: str):
     """This is the callback which configures the response of our Dash App to
     whatever dropdown is selected"""
-    if category == "Social Climber":
-        slice = social_climbers()
-        return generate_plot(slice)
-    elif category == "(Un)Happy Family":
-        slice = family()
-        return generate_plot(slice)
-    elif category == "Unlikely Survivor":
-        slice = unlikely_survivor()
-        return generate_plot(slice)
-    elif category == "Last Minute Ticket":
-        slice = last_minute()
-        return generate_plot(slice)
+    slice = get_selected_df(category)
+    return generate_plot(slice)
 
 
 @app.callback(
@@ -405,6 +372,8 @@ def update_age(category: str):
 
 
 def get_selected_df(category: str) -> pd.DataFrame:
+    """Helper to encapsulate the logic that figures out which dataset to return based
+    on user selection"""
     if category == "Social Climber":
         return social_climbers()
     elif category == "(Un)Happy Family":

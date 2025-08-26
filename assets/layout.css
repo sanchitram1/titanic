@@ -1,8 +1,21 @@
+.dashboard {
+    background-color: "#FFFFFF";
+    padding: 20px;
+    min-height: 100vh;
+    margin-left: 0;
+    margin-top: 0;
+    padding-right: 60px;
+    padding-left: 40px;
+}
+
 .row {
     display: flex;
     flex-direction: row;
     width: 100%;
     gap: 24px;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 40px;
 }
 
 .main {
@@ -39,4 +52,19 @@
     margin: 0;
     padding: 0;
     font-style: italic;
+}
+
+.metrics-container {
+    display: flex;
+    flex: 0 0 60%; 
+    justify-content: space-around;
+    gap: 20px;
+}
+
+.category-dropdown-container {
+    display: flex;
+    align-items: center;
+    flex: 0 0 40%; 
+    margin-right: 16px;
+    margin-left: 50px;
 }
