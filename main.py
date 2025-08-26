@@ -1,4 +1,5 @@
 import base64
+
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -176,6 +177,7 @@ def create_dashboard():
                                 clearable=False,
                                 style={"color": "#333"},
                             ),
+                            dcc.Graph("ship-map"),
                         ],
                         style={"maxWidth": "600px", "margin": "0 auto"},
                     )
@@ -254,11 +256,7 @@ def family() -> pd.DataFrame:
     """All families which had left on the Titanic...whether they ended up as happy
     or unhappy"""
     # family means either sibling or parent
-    family_df = df[(df["SibSp"] + df["Parch"]) > 0].copy()
-
-    # now, we can group by last name
-    family_df["LastName"] = family_df["Name"].str.split(",").str[0].str.strip()
-    return family_df
+    return df.loc[(df["SibSp"] + df["Parch"]) > 0, :].copy()
 
 
 def last_minute() -> pd.DataFrame:
@@ -273,54 +271,51 @@ def last_minute() -> pd.DataFrame:
     ].copy()
 
 
-@app.callback(Output("ship-map", "figure"), Input("test-cases", "value"))
+@app.callback(Output("ship-map", "figure"), Input("category-dropdown", "value"))
 def update_ship_map(category: str):
     """This is the callback which configures the response of our Dash App to
     whatever dropdown is selected"""
     if category == "Social Climber":
-        df = social_climbers()
-        return generate_plot(df)
-    elif category == "Families":
-        df = family()
-        return generate_plot(df)
-    elif category == "Last Minute":
-        df = last_minute()
-        return generate_plot(df)
+        slice = social_climbers()
+        return generate_plot(slice)
+    elif category == "(Un)Happy Family":
+        slice = family()
+        return generate_plot(slice)
+    elif category == "Last Minute Ticket":
+        slice = last_minute()
+        return generate_plot(slice)
 
 
-@app.callback(Output("summary-stats-placeholder", "text"), Input("test-cases", "value"))
-def update_text(category: str):
-    if category == "Social Climber":
-        df = social_climbers()
-    elif category == "Families":
-        df = family()
-    elif category == "Last Minute":
-        df = last_minute()
+# @app.callback(
+#     Output("summary-stats-placeholder", "text"), Input("category-dropdown", "value")
+# )
+# def update_text(category: str):
+#     if category == "Social Climber":
+#         df = social_climbers()
+#     elif category == "Families":
+#         df = family()
+#     elif category == "Last Minute":
+#         df = last_minute()
 
-    # Build summary dynamically
-    total = len(df)
-    survived = df["Survived"].sum()
-    rate = (survived / total * 100) if total > 0 else 0
+#     # Build summary dynamically
+#     total = len(df)
+#     survived = df["Survived"].sum()
+#     rate = (survived / total * 100) if total > 0 else 0
 
-    summary_text = [
-        html.H3("Survival Analysis"),
-        html.P(f"Total Passengers: {total}"),
-        html.P(f"Survived: {survived}"),
-        html.P(f"Did Not Survive: {total - survived}"),
-        html.P(f"Survival Rate: {rate:.2f}%"),
-    ]
+#     summary_text = [
+#         html.H3("Survival Analysis"),
+#         html.P(f"Total Passengers: {total}"),
+#         html.P(f"Survived: {survived}"),
+#         html.P(f"Did Not Survive: {total - survived}"),
+#         html.P(f"Survival Rate: {rate:.2f}%"),
+#     ]
 
-    app.layout = html.Div(children=summary_text)
+#     app.layout = html.Div(children=summary_text)
 
 
 def main():
     create_dashboard()
     app.run(debug=True)
-
-    # encoded_image = load_image()
-    # deck_width, deck_height = get_image_size()
-    # fig = generate_plot(social_climbers, deck_width, deck_height, encoded_image)
-    # fig.show()
 
 
 if __name__ == "__main__":
