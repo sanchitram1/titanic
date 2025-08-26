@@ -6,7 +6,20 @@
     margin-top: 0;
     padding-right: 60px;
     padding-left: 40px;
-    /* align-items: stretch; */
+    position: relative 
+}
+
+.main-section {
+    /* Take it out of the document flow */
+    position: absolute;
+    /* Place it behind everything else */
+    z-index: -1;
+    /* Position it from the top of the dashboard container */
+    top: -100px;
+    /* You will need to fine-tune this value */
+    /* Make sure it spans the width of the container */
+    left: 0;
+    right: 0;
 }
 
 .row {
@@ -19,6 +32,7 @@
     margin-bottom: 40px;
     padding-top: 20px;
     padding-bottom: 0px;
+    z-index: 2;
 }
 
 .main {
@@ -38,6 +52,7 @@
     justify-content: flex-start;
     align-items: center;
     min-height: 50px;
+    z-index: 2;
 }
 
 /* This new rule handles the styling for the large metric numbers */
@@ -48,6 +63,7 @@
     margin: 0;
     /* Remove default paragraph margin */
     padding: 0;
+    z-index: 2;
 }
 
 /* This new rule handles the styling for the small labels */
@@ -57,6 +73,7 @@
     margin: 0;
     padding: 0;
     font-style: italic;
+    z-index: 2;
 }
 
 .metrics-container {
@@ -65,6 +82,7 @@
     justify-content: space-around;
     gap: 20px;
     align-items: stretch;
+    z-index: 2;
 }
 
 .category-dropdown-container {
@@ -73,4 +91,5 @@
     flex: 0 0 40%; 
     margin-right: 16px;
     margin-left: 50px;
+    z-index: 2;
 }
