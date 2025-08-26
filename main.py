@@ -34,6 +34,7 @@ def get_image_size():
     return deck_img.size
 
 
+# Some constants that are useful for how we're rendering the images
 DECK_WIDTH, DECK_HEIGHT = get_image_size()
 ENCODED_IMAGE_STRING = load_image()
 
