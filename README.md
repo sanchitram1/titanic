@@ -19,9 +19,15 @@ Dash, and Plotly.
 
 ## Quickstart
 
-Assuming you have pkgx...if not, see [here](https://pkgx.sh)
+### 0. Download Data
+
+It's a csv, and you can get it from [here](https://www.kaggle.com/competitions/titanic/data)
 
 ### 1. Install Dependencies
+
+> [!NOTE]
+>
+> This assumes that you have pkgx...if not, see [here](https://pkgx.sh)
 
 This project uses [astral.sh/uv](https://astral.sh/uv/) for dependency management
 

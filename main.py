@@ -1,3 +1,5 @@
+# Dataset: https://www.kaggle.com/competitions/titanic/data
+
 import base64
 
 import numpy as np
@@ -74,7 +76,10 @@ def generate_clustered_coordinates(df, max_per_row=20, spacing=0.15) -> pd.DataF
     """
     # If we need to offset by x or y
     # NOTE: initial configuration **heavily** depends on your choice of image and size
+    # the keys here refer to the passenger class, and the values are coordinates
+    # that we offset the scatter points by, when plotting passengers in those groups
     cluster_x_offsets = {1: 2.65, 2: 5.95, 3: 9.25}
+    # y vals are all equal because all are along the same line, but at different xs
     cluster_y_offsets = {1: -1.75, 2: -1.75, 3: -1.75}
 
     # this is our output
