@@ -21,9 +21,7 @@ def load_image() -> str:
         encoded_image_string = f"data:image/jpeg;base64,{encoded_image_string}"
 
     except FileNotFoundError as e:
-        print(
-            f"Error: The image file '{IMG_PATH}' was not found. Please check the file path."
-        )
+        print(f"'{IMG_PATH}' was not found. Please check the file path.")
         raise e
 
     return encoded_image_string
