@@ -39,6 +39,7 @@ DECK_WIDTH, DECK_HEIGHT = get_image_size()
 ENCODED_IMAGE_STRING = load_image()
 
 
+# deprecated, but a fun function
 def generate_scatter_coordinates(df, image_width, image_height) -> tuple[int, int]:
     """Generates correctly clustered coordinates based on passenger class"""
     x_coords = np.zeros(len(df))
@@ -135,7 +136,7 @@ def generate_plot(some_sliced_data: pd.DataFrame) -> go.Figure:
                 color=sliced_data["Pclass"].map(
                     {1: "#e9bf99", 2: "#a81a0c", 3: "#000000"}
                 ),
-                opacity=0.8,
+                # opacity=1.0,
             ),
             # Add hover text to show passenger details on hover
             hovertext=hover_text,
@@ -174,18 +175,15 @@ def generate_plot(some_sliced_data: pd.DataFrame) -> go.Figure:
 def create_dashboard():
     """Creates a custom layout for the "Titanic Itinerary" dashboard.
 
-    This layout includes a title, a dropdown for scenario selection, and
-    placeholders for a ship image and summary statistics.
-
-    Returns:
-        html.Div: The complete layout for the Dash application."""
+    This layout includes a title, a dropdown for scenario selection, options for info
+    metrics, and a ship map"""
 
     # Define the categories for the dropdown menu
     titanic_categories = [
         {"label": "Social Climber", "value": "Social Climber"},
         {"label": "Last Minute Ticket", "value": "Last Minute Ticket"},
-        {"label": "Unlikely Survivor", "value": "Unlikely Survivor"},
-        {"label": "(Un)Happy Family", "value": "(Un)Happy Family"},
+        {"label": "Against All Odds", "value": "Against All Odds"},
+        {"label": "Sole Survivor", "value": "Sole Survivor"},
     ]
 
     # Define the Dashboard Layout
@@ -296,11 +294,13 @@ def social_climbers() -> pd.DataFrame:
     return social_climbers_df
 
 
-def family() -> pd.DataFrame:
-    """All families which had left on the Titanic...whether they ended up as happy
-    or unhappy"""
+def sole_survivor() -> pd.DataFrame:
+    """Families who had exactly one survivor"""
     # family means either sibling or parent
-    return df.loc[(df["SibSp"] + df["Parch"]) > 0, :].copy()
+    families = df.loc[(df["SibSp"] + df["Parch"]) > 0, :].copy()
+    grouped = families.groupby("Ticket")
+    one_survivor = grouped.filter(lambda x: (x["Survived"].sum() == 1))
+    return one_survivor
 
 
 def last_minute() -> pd.DataFrame:
@@ -315,24 +315,21 @@ def last_minute() -> pd.DataFrame:
     ].copy()
 
 
-def unlikely_survivor() -> pd.DataFrame:
-    """Passengers who were unlikely to survive based on their characteristics but did
-    So, people very young or very old who bought **very cheap** tickets and were
-    in third class"""
-    survived = df["Survived"] == 1
-    third_class = df["Pclass"] == 3
+def against_all_odds() -> pd.DataFrame:
+    """People unlikely to survive in general"""
+    # survived = df["Survived"] == 1
+    # third_class = df["Pclass"] == 3
     cheap_fare = df["Fare"] < df["Fare"].quantile(0.25)
-    is_young = df["Age"] <= df["Age"].quantile(0.25)
-    is_old = df["Age"] >= df["Age"].quantile(0.75)
-    Unlikely_Survivor = df[survived & third_class & cheap_fare & (is_young | is_old)]
-    return Unlikely_Survivor.copy()
+    is_young = df["Age"] <= df["Age"].quantile(0.10)
+    is_old = df["Age"] >= df["Age"].quantile(0.10)
+    unlikely = df[cheap_fare & (is_young | is_old)]
+    return unlikely.copy()
 
 
 # And here are all the callbacks
 @app.callback(Output("ship-map", "figure"), Input("category-dropdown", "value"))
 def update_ship_map(category: str):
-    """This is the callback which configures the response of our Dash App to
-    whatever dropdown is selected"""
+    """Regenerates ship map based on selection"""
     slice = get_selected_df(category)
     return generate_plot(slice)
 
@@ -341,6 +338,7 @@ def update_ship_map(category: str):
     Output("survival-percentage", "children"), Input("category-dropdown", "value")
 )
 def update_survival_percentage(category: str):
+    """Regenerates survival percentage metric based on selection"""
     sub = get_selected_df(category)
     return [
         html.P(f"{sub['Survived'].mean() * 100:.2f}%", className="metric-value"),
@@ -353,6 +351,7 @@ def update_survival_percentage(category: str):
     Output("number-of-males", "children"), Input("category-dropdown", "value")
 )
 def update_males(category: str):
+    """Regenerates number of males metric based on selection"""
     sub = get_selected_df(category)
     return [
         html.P(f"{len(sub[sub['Sex'] == 'male']):.0f}", className="metric-value"),
@@ -365,6 +364,7 @@ def update_males(category: str):
     Output("number-of-females", "children"), Input("category-dropdown", "value")
 )
 def update_females(category: str):
+    """Regenerates number of females metric based on selection"""
     sub = get_selected_df(category)
     return [
         html.P(f"{len(sub[sub['Sex'] == 'female']):.0f}", className="metric-value"),
@@ -375,6 +375,7 @@ def update_females(category: str):
 
 @app.callback(Output("average-age", "children"), Input("category-dropdown", "value"))
 def update_age(category: str):
+    """Regenerates average age metric based on selection"""
     sub = get_selected_df(category)
     return [
         html.P(f"{sub['Age'].mean():.0f}y", className="metric-value"),
@@ -388,12 +389,12 @@ def get_selected_df(category: str) -> pd.DataFrame:
     on user selection"""
     if category == "Social Climber":
         return social_climbers()
-    elif category == "(Un)Happy Family":
-        return family()
+    elif category == "Sole Survivor":
+        return sole_survivor()
     elif category == "Last Minute Ticket":
         return last_minute()
-    elif category == "Unlikely Survivor":
-        return unlikely_survivor()
+    elif category == "Against All Odds":
+        return against_all_odds()
 
     raise ValueError(f"Bad category: {category}")
 
