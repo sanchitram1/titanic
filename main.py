@@ -1,5 +1,4 @@
 import base64
-
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -83,6 +82,7 @@ def generate_plot(
     x_coords = np.clip(x_coords, 0, deck_width)
     y_coords = np.clip(y_coords, 0, deck_height)
 
+
     # Create scatter plot
     fig = go.Figure()
 
@@ -91,7 +91,7 @@ def generate_plot(
             x=x_coords,
             y=y_coords,
             mode="markers",
-            marker=dict(size=12, color="blue"),
+            marker=dict(size=8, color=some_sliced_data["Pclass"]),
             text=hover_text,
             hoverinfo="text",
         )
